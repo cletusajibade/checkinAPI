@@ -1,14 +1,18 @@
 'use strict';
+
+var bcrypt = require('bcrypt');
+
 var dbConn = require('./../../config/db.config');
 //Employee object create
-var Guest = function(guest){
-  this.first_name     = guest.first_name;
+
  
-//  this.status         = guest.status ? employee.status : 1;
-  this.created_at     = new Date();
-  this.updated_at     = new Date();
+var Users = function(userslogin){
+  this.id     = userslogin.id;
+  this.name      = userslogin.name;
+  this.password = employee.password;
+  this.email          = employee.email;
+
 };
- 
 var Banners = function(banners){
     this.first_name     = banners.Imagefile;
    
@@ -27,35 +31,57 @@ var Banners = function(banners){
     });
     };
 
-    Banners.getListofBookings = function (guestdata)  
-    {
-      var today = new Date();
-      var TwoDigitmonth = getMonth(today);
-      var date = today.getFullYear()+'-'+TwoDigitmonth+'-'+today.getDate(); 
-     debugger
-      dbConn.query("SELECT a.*,b.userId as hostId, b.listingTitle, b.countryName, b.addrState,b.addrCity,b.addrStreet,b.addrHouseNumber, b.imageList, c.name as host_name, c.profile_pic as host_pic, c.phone as host_phone FROM ckeckin.booking_property as a, ckeckin.hosting as b,  ckeckin.users as c where a.propertyId=b.id ",(err,result,fields)=>{
-        if(err){
-          res.send({
-            "code":400,
-            "message":err
-          })
-        }else{
-         
-          if(result.length > 0){
-             for (var i = 0; i < result.length ; i++) {  
-           
-              result[i].imageList=result[i].imageList.split(",")  
-             } 
-     
-             guestdata("OK", result,200);
-    
-             
-            }else{ 
-             guestdata("OK", result,200); 
-             
-            }
+    Banners.listbrands = function (guestdata) {
+      console.log("a");
+      dbConn.query("SELECT * FROM ckeckin.brandlist", function (err, res) {
+      if(err) {
+        console.log("error: ", err);
+        guestdata(err, null);
+      }
+      else{
+  
+        guestdata("OK", res,200);
+      }
+      });
+      };
+
+      Banners.listexperience = function (guestdata) {
+        console.log("a");
+        dbConn.query("SELECT * FROM ckeckin.experiencelist", function (err, res) {
+        if(err) {
+          console.log("error: ", err);
+          guestdata(err, null);
         }
-      })
+        else{
+    
+          guestdata("OK", res,200);
+        }
+        });
+        };
+    Banners.getListofBookings = function (page,numPerPage,guestdata)  
+    {
+     
+    
+var skip = (page-1) * numPerPage; 
+var limit = skip + ',' + numPerPage; // Here we compute the LIMIT parameter for MySQL query
+dbConn.query('SELECT count(*) as numRows FROM ckeckin.hosting',function (err, rows, fields) {
+    if(err) {
+        console.log("error: ", err);
+        guestdata(err, null);
+    }else{
+        var numRows = rows[0].numRows;
+        var numPages = Math.ceil(numRows / numPerPage);
+        dbConn.query('SELECT * FROM ckeckin.hosting LIMIT ' + limit,function (err, rows, fields) {
+            if(err) {
+                console.log("error: ", err);
+                guestdata(err, null);
+            }else{
+                console.log(rows)
+                guestdata(null, rows,numPages,200);
+            }
+        });            
+    }
+});
     };
 
 
@@ -146,11 +172,9 @@ var Banners = function(banners){
    });
      
     };
-    Banners.changePassword = function (guestdata)  
+    Banners.changePassword = function (old_password,new_password,userId,guestdata)  
     {
-      var old_password=req.body.old_password;
-      var new_password=req.body.new_password;
-      var userId=req.body.userId;    
+     
       pool.getConnection(function(err,connection){
         if (err) {
           //connection.release();
@@ -206,9 +230,7 @@ var Banners = function(banners){
                                 })
                }
   
-             });
-  
-                  
+             }); 
   
           }
           else{
@@ -226,11 +248,9 @@ var Banners = function(banners){
               
       };
    
-      Banners.resetPassword = function (guestdata)  
+      Banners.resetPassword = function (email,otp,guestdata)  
       {
-        var email=req.body.email;
-        var password=req.body.password;
-        var otp=req.body.otp;    
+       
         pool.getConnection(function(err,connection){
           if (err) {
             //connection.release();
@@ -290,6 +310,31 @@ var Banners = function(banners){
                 
         };
         
+
+        Banners.searchCarByAdress = function (city,guestdata) {
+      
+          var cityParameter=city;
+          console.log(cityParameter);
+          var cityString = cityParameter.split(" ").join("");
+          var city = cityString.toLowerCase();
+          
+        
+          dbConn.query('Select * from car_hosting WHERE INSTR(cityName,?)',[city],(err,result,fields)=>{
+          
+              var i;
+              for (i = 0; i < result.length ; i++) {
+              
+                    if(result[i].carsImageArray!=null){
+                     result[i].carsImageArray=result[i].carsImageArray.split(","); 
+                    }	  
+                    guestdata("OK", result,200);
+              
+            }
+          })
+        
+      };
+     
+
  function getMonth(date) {
   var month = date.getMonth() + 1;
   return month < 10 ? '0' + month : '' + month; // ('' + month) for string result

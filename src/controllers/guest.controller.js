@@ -1,5 +1,7 @@
 'use strict';
 const Guest = require('../models/guest.model');
+
+
 // exports.findAll = function(req, res) {
 //     Guest.findAll(function(err, guest) {
 //   console.log('controller')
@@ -18,14 +20,27 @@ exports.loadbanners = function( req,res) {
 
 });
 } 
- 
-
-exports.getListofBookings=async function(req,res){
-
-    Guest.getListofBookings(function(err, guest,statuscode) {
+  
+exports.searchcar=async function (req,res){
+  
+    console.log(req.params.city);
+    Guest.searchCarByAdress(req.params.city,function(err, guest,statuscode) {
         res
         .status(200)
         .json({"message":err,"status":statuscode,"data":guest});
+
+});
+}
+
+exports.getListofBookings=async function(req,res){
+
+    console.log(req.body.page);
+    console.log(req.body.city);
+    
+    Guest.getListofBookings(req.body.page,req.body.numPerPage,function(err, guest,numpages,statuscode) {
+        res
+        .status(200)
+        .json({"message":err,"status":statuscode,"data":guest,"totalpages":numpages});
 
 });
   }
@@ -39,7 +54,10 @@ exports.getListofBookings=async function(req,res){
  }
 
  exports.resetPassword=async (req,res,fields)=>{
-    Guest.resetPassword(function(err, guest,statuscode) {
+
+    const pass_Users = new Users(req.body);
+
+    Guest.resetPassword(pass_Users,function(err, guest,statuscode) {
         res
         .status(200)
         .json({"message":err,"status":statuscode,"data":guest}); 
@@ -77,12 +95,21 @@ exports.getListofBookings=async function(req,res){
 }); 
  }
  exports.listbrands=async (req,res,fields)=>{
+      
     Guest.listbrands(function(err, guest,statuscode) {
         res
         .status(200)
         .json({"message":err,"status":statuscode,"data":guest}); 
 }); 
  }
+ exports.listexperience=async (req,res,fields)=>{
+     
+   Guest.listexperience(function(err, guest,statuscode) {
+       res
+       .status(200)
+       .json({"message":err,"status":statuscode,"data":guest}); 
+}); 
+}
 
  exports.searchhouse=async (req,res,fields)=>{
     Guest.searchhouse(function(err, guest,statuscode) {
@@ -90,11 +117,4 @@ exports.getListofBookings=async function(req,res){
         .status(200)
         .json({"message":err,"status":statuscode,"data":guest}); 
 }); 
- }
- exports.searchcar=async (req,res,fields)=>{
-    Guest.searchcar(function(err, guest,statuscode) {
-        res
-        .status(200)
-        .json({"message":err,"status":statuscode,"data":guest}); 
-}); 
- }
+ } 
